@@ -1,16 +1,22 @@
-
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 const hero = document.getElementById('hero');
 const canvas = document.getElementById('hero-canvas');
 
 let scene, camera, renderer, points, positions, velocities, targets, forming = false;
-let particleCount = 6000;       // adjust if you need more/less
-const bounds = 180;             // random float bounds
-const speed = 0.25;             // wander speed
-const arriveStrength = 0.08;    // how aggressively particles seek letters
-const textString = "ALIEN FORK";
-const fontFamily = "900 180px Roboto"; // heavy weight for better sampling
+let particleCount = 6000;
+const bounds = 180;
+const speed = 0.25;
+const arriveStrength = 0.08;
+
+// dynamic text + shimmer control
+let currentText = "ALIEN FORK";
+const nextText = "FORK YOUR REALITY";
+const neonGreen = "#00FF00";
+let shimmerUntil = 0;           // timestamp in ms
+let shimmerSecs = 1.2;          // duration of shimmer
+let phases;                     // per-particle random phase for shimmer jitter
+const fontFamily = "900 180px Roboto";
 
 init();
 animate();
@@ -24,13 +30,12 @@ function init() {
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     renderer.setSize(hero.clientWidth, hero.clientHeight);
 
-    // Foggy background vibe (subtle)
     scene.fog = new THREE.FogExp2(0x0b0b10, 0.002);
 
-    // Particles geometry
     positions = new Float32Array(particleCount * 3);
     velocities = new Float32Array(particleCount * 3);
     targets = new Float32Array(particleCount * 3);
+    phases = new Float32Array(particleCount); // NEW
 
     for (let i = 0; i < particleCount; i++) {
         const i3 = i * 3;
@@ -42,9 +47,11 @@ function init() {
         velocities[i3 + 1] = (Math.random() * 2 - 1) * speed;
         velocities[i3 + 2] = (Math.random() * 2 - 1) * speed;
 
-        targets[i3 + 0] = positions[i3 + 0]; // start with current as target
+        targets[i3 + 0] = positions[i3 + 0];
         targets[i3 + 1] = positions[i3 + 1];
         targets[i3 + 2] = 0;
+
+        phases[i] = Math.random() * Math.PI * 2;
     }
 
     const geometry = new THREE.BufferGeometry();
@@ -54,18 +61,29 @@ function init() {
         size: 1.8,
         transparent: true,
         opacity: 0.95,
-        depthWrite: false,
+        depthWrite: false
     });
 
     points = new THREE.Points(geometry, material);
     scene.add(points);
 
-    // Precompute text target points
+    // Initial text targets
     setTextTargets();
 
     // Interaction
     hero.addEventListener('pointerenter', () => forming = true);
     hero.addEventListener('pointerleave', () => forming = false);
+
+    // Click to change text, color, and shimmer
+    hero.addEventListener('click', () => {
+        if (currentText !== nextText) {
+            currentText = nextText;
+            setTextTargets();                         // recompute targets for the new phrase
+            points.material.color = new THREE.Color(neonGreen);
+        }
+        forming = true;                                // ensure they form on click
+        shimmerUntil = performance.now() + shimmerSecs * 1000; // trigger shimmer window
+    });
 
     // Resize
     new ResizeObserver(onResize).observe(hero);
@@ -85,7 +103,7 @@ function setTextTargets() {
     const h = Math.floor(Math.max(260, hero.clientHeight * 0.45));
     const gap = Math.max(3, Math.floor(w / 260)); // sampling density relative to width
 
-    const pts = sampleTextToPoints(textString, fontFamily, w, h, gap);
+    const pts = sampleTextToPoints(currentText, fontFamily, w, h, gap);
     const needed = particleCount;
 
     // Map 2D text points into 3D target array centered at (0,0,0)
@@ -105,7 +123,6 @@ function sampleTextToPoints(text, fontCSS, width, height, gap) {
     off.height = height;
     const ctx = off.getContext('2d');
 
-    // Background transparent, draw bright text
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = "#ffffff";
     ctx.font = fontCSS;
@@ -126,40 +143,65 @@ function sampleTextToPoints(text, fontCSS, width, height, gap) {
         for (let x = 0; x < width; x += gap) {
             const idx = (y * width + x) * 4 + 3; // alpha channel
             if (data[idx] > 128) {
-                // Convert canvas coords to world coords centered around 0
-                const wx = (x - width / 2) * 0.5;       // 0.5 = scale factor; tweak for size
+                const wx = (x - width / 2) * 0.5;
                 const wy = (height / 2 - y) * 0.5;
                 points.push({ x: wx, y: wy });
             }
         }
     }
-    // Avoid empty edge-case
     return points.length ? points : [{ x: 0, y: 0 }];
 }
 
 function animate() {
     requestAnimationFrame(animate);
 
+    const now = performance.now();
     const pos = points.geometry.attributes.position.array;
     const tgs = targets;
     const vels = velocities;
 
+    // SHIMMER window easing (0..1)
+    const shimmerActive = now < shimmerUntil;
+    const shimmerT = shimmerActive ? 1 - (shimmerUntil - now) / (shimmerSecs * 1000) : 1;
+    const ease = shimmerActive ? easeOutExpo(1 - shimmerT) : 0;
+
+    // Global pulse for shimmer (affects size/opacity)
+    if (shimmerActive) {
+        const pulse = 1 + Math.sin(now * 0.02) * 0.35 * (1 - shimmerT); // decays over time
+        points.material.size = 1.8 * pulse;
+        points.material.opacity = 0.95 * (0.85 + 0.15 * Math.sin(now * 0.04));
+    } else {
+        points.material.size = 1.8;
+        points.material.opacity = 0.95;
+    }
+
     if (forming) {
-        // Seek targets
         for (let i = 0; i < particleCount; i++) {
             const i3 = i * 3;
+
+            // seek the target
             pos[i3 + 0] += (tgs[i3 + 0] - pos[i3 + 0]) * arriveStrength;
             pos[i3 + 1] += (tgs[i3 + 1] - pos[i3 + 1]) * arriveStrength;
             pos[i3 + 2] += (tgs[i3 + 2] - pos[i3 + 2]) * arriveStrength;
-            // Small jitter to keep it alive
+
+            // base micro-jitter
             pos[i3 + 0] += (Math.random() - 0.5) * 0.06;
             pos[i3 + 1] += (Math.random() - 0.5) * 0.06;
             pos[i3 + 2] += (Math.random() - 0.5) * 0.02;
+
+            // EXTRA shimmer twinkle during click window (phase-offset sin noise)
+            if (shimmerActive) {
+                const ph = phases[i];
+                pos[i3 + 0] += Math.sin(now * 0.02 + ph) * 0.35 * ease;
+                pos[i3 + 1] += Math.cos(now * 0.025 + ph * 1.3) * 0.35 * ease;
+                pos[i3 + 2] += Math.sin(now * 0.018 + ph * 0.7) * 0.2 * ease;
+            }
         }
     } else {
-        // Wander & bounce in bounds
+        // free wander with soft bounds
         for (let i = 0; i < particleCount; i++) {
             const i3 = i * 3;
+
             vels[i3 + 0] += (Math.random() - 0.5) * 0.01;
             vels[i3 + 1] += (Math.random() - 0.5) * 0.01;
             vels[i3 + 2] += (Math.random() - 0.5) * 0.005;
@@ -168,7 +210,6 @@ function animate() {
             pos[i3 + 1] += vels[i3 + 1];
             pos[i3 + 2] += vels[i3 + 2];
 
-            // Soft bounds
             for (let k = 0; k < 3; k++) {
                 const limit = k === 1 ? bounds * 0.6 : bounds;
                 if (pos[i3 + k] > limit || pos[i3 + k] < -limit) {
@@ -180,4 +221,9 @@ function animate() {
 
     points.geometry.attributes.position.needsUpdate = true;
     renderer.render(scene, camera);
+}
+
+// small easing helper for shimmer decay
+function easeOutExpo(x) {
+    return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
 }
