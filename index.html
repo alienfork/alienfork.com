@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Alien Fork</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body>
+
+  <!-- Header include -->
+  <header data-include="partials/header.html"></header>
+
+  <!-- HERO / Three.js -->
+  <main id="home">
+    <section>
+      <div id="hero" aria-label="Interactive particle scene">
+        <canvas id="hero-canvas"></canvas>
+        <div class="hero-overlay"></div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section id="about">
+      <div class="wrap center">
+        <h2 class="accent">About Us</h2>
+        <p class="lead">
+          Alien Fork is a transmedia entertainment studio crafting light-hearted, loving games and stories.
+          We build playful and curious worlds to bring people together.
+        </p>
+      </div>
+    </section>
+
+    <!-- Banner Image with Overlay -->
+    <section id="worlds">
+      <div class="banner">
+        <img alt="Robot Garden banner" src="assets/test.jpg" />
+        <div class="title">ROBOT GARDEN</div>
+      </div>
+      <div class="wrap center">
+        <p class="lead">Partner up with your robot to help to undo their directives while exploring garden and decomposer robot cities and finding clues to the ancient Architect's design.</p>
+      </div>
+    </section>
+
+    <!-- Banner Image with Overlay -->
+      <div class="banner">
+        <img alt="Jupiter's Orbit banner" src="assets/test.jpg" />
+        <div class="title">Jupiter's Orbit</div>
+      </div>
+      <div class="wrap center">
+        <p class="lead">You're dT, an asteroid navigating space, meeting planets, making friends and finding love.</p>
+      </div>
+    </section>
+
+    <!-- Coming Soon Cards -->
+     <!-- TODO bring this in later once the other games are up and running? Leaving for now -->
+    <section id="coming-soon">
+      <div class="wrap">
+        <h2 class="accent center">COMING SOON</h2>
+        <div class="grid">
+          <article class="card">
+            <img alt="Supernova"
+              src="https://images.unsplash.com/photo-1496307653780-42ee777d4833?q=80&w=2000&auto=format&fit=crop">
+            <div class="tag">Supernova</div>
+            <div class="body">An underwater anarchist colony clashes with the US when their mental wellness tech goes viral.</div>
+          </article>
+          <article class="card">
+            <img alt="Altar-Alter"
+              src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=2000&auto=format&fit=crop">
+            <div class="tag">Altar-Alter</div>
+            <div class="body">The multiverses are colliding and our universe will soon collapse. Find the magic runes in each universe's forest before it's too late.</div>
+          </article>
+          <article class="card">
+            <img alt="this-life"
+              src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80&w=2000&auto=format&fit=crop">
+            <div class="tag">this->life</div>
+            <div class="body">A divine love story between Ego and Being. The cosmic balance exists in each of us.</div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer include -->
+  <div data-include="partials/footer.html"></div>
+
+  <!-- Scripts -->
+  <script src="js/includes.js"></script>
+  <script src="js/site.js"></script>
+  <script type="module" src="js/hero.js"></script>
+</body>
+
+</html>
