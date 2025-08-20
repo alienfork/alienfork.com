@@ -66,9 +66,6 @@ function promoteOnce() {
 
 let scene, camera, renderer, points, positions, velocities, targets, forming = false;
 
-init();
-animate();
-
 function init() {
     // ✅ ensure hero has pixels before sizing renderer (iOS can report 0 early)
     setHeroPixelHeight();
@@ -302,7 +299,7 @@ function setTextTargets() {
     if (reduceMotion) gapCss *= 1.2;
     gapCss = Math.floor(gapCss);
 
-    const pts = sampleTextToPoints(phrase, "900 180px Roboto", wCss, hCss, gapCss);
+    const pts = sampleTextToPoints(phrase, "900 180px Inter", wCss, hCss, gapCss);
     const needed = particleCount;
 
     for (let i = 0; i < needed; i++) {
@@ -452,3 +449,8 @@ function animate(now = 0) {
 function easeOutExpo(x) {
     return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
 }
+
+document.fonts.load("900 180px 'Inter'").then(() => {
+    init();
+    animate();
+});
