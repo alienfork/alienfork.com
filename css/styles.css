@@ -125,6 +125,27 @@ header {
     letter-spacing: 0.06em;
 }
 
+/* Newsletter block */
+.newsletter {
+    background: #08090c;
+    text-align: center;
+    padding: 48px 16px;
+}
+
+/* Inner container stays centered + narrow */
+.newsletter-inner {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* Brandmark logo link */
+.newsletter-logo img {
+    height: 60px;
+    /* adjust as needed */
+    margin: 0 auto 20px;
+    display: block;
+}
+
 nav ul {
     list-style: none;
     display: flex;
